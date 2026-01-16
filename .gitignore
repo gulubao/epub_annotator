@@ -1,0 +1,7 @@
+.claude
+.venv
+data/stardict.db
+*.epub
+AGENTS.md
+CLAUDE.md
+__pycache__

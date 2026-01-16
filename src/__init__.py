@@ -1,0 +1,1 @@
+# EPUB Annotator - Core Package
