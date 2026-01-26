@@ -12,7 +12,7 @@
 
 ```bash
 uv venv .venv
-source .venv/bin/activate
+source .venv/bin/activate # .venv\Scripts\activate # (Windows)
 uv pip install -r requirements.txt
 
 # 下载词典 (812MB)
@@ -24,16 +24,17 @@ unzip data/ecdict.zip -d data && rm data/ecdict.zip
 ## 使用
 
 ```bash
-python main.py input.epub                # 输出: input_annotated.epub
-python main.py input.epub -o output.epub # 指定输出
-python main.py input.epub -t 3.5         # 调整阈值
+uv run python main.py "input.epub" -t 2.5 -m 1 --wordwise  # 输出: input_annotated.epub  # -t 2.5 调整阈值 # default 2.0 # 2.0≈前1万词, 3.0≈前3万词 # -m 1 只显示1个释义 # --wordwise 类似 Wordwise 的下行注释
+uv run python main.py "input.epub" -o "output.epub" # 指定输出
 ```
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `-o` | `{stem}_annotated.epub` | 输出路径 |
-| `-t` | `4.0` | Zipf阈值 (4.0≈前1万词, 3.0≈前3万词) |
+| `-t` | `2.0` | Zipf阈值 (2.0≈前1万词, 3.0≈前3万词) |
 | `-d` | `data/stardict.db` | 词典路径 |
+| `-m` | `2` | 每个词显示的释义数量 (default: 2) |
+| `--wordwise` | 关闭 | 将注释放在词下方的更小一行 |
 
 ## 结构
 

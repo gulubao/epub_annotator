@@ -4,7 +4,7 @@ import re
 import sqlite3
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 
 class BaseDictionary(ABC):
@@ -79,8 +79,10 @@ class ECDictSqlite(BaseDictionary):
     _LEMMA_PATTERN = re.compile(r'[012]:(\w+)')
     # Pattern to match POS prefix like "n. ", "v. ", "adj. "
     _POS_PATTERN = re.compile(r'^[a-z]{1,4}\.\s*')
+    # Pattern to remove parenthetical explanations: (), （）, [], 【】, 〈〉, <>
+    _PAREN_PATTERN = re.compile(r'[\(（\[【〈<][^)）\]】〉>]*[)）\]】〉>]')
 
-    def __init__(self, db_path: str | Path, max_definitions: int = 2,
+    def __init__(self, db_path: Union[str, Path], max_definitions: int = 2,
                  include_phonetic: bool = True):
         """Initialize with path to stardict.db.
 
@@ -168,6 +170,8 @@ class ECDictSqlite(BaseDictionary):
 
             # Remove POS prefix like "n. " or "vt. "
             line = self._POS_PATTERN.sub('', line)
+            # Remove parenthetical explanations
+            line = self._PAREN_PATTERN.sub('', line).strip()
 
             # Split by Chinese/English comma or semicolon, take first few
             parts = re.split(r'[,，;；]', line)

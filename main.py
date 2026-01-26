@@ -13,7 +13,7 @@ PROJECT_ROOT = Path(__file__).parent
 DEFAULT_DICT_PATH = PROJECT_ROOT / "data" / "stardict.db"
 
 ANNOTATION_CSS = """
-.annotated-word { display: inline; }
+span.annotated-word { display: inline; }
 .annotation {
     font-size: 0.75em;
     color: #7f8c8d;
@@ -22,6 +22,23 @@ ANNOTATION_CSS = """
     margin: 0 2px;
     border-radius: 4px;
     font-family: sans-serif;
+}
+.annotated-word.wordwise {
+    ruby-position: under;
+    ruby-align: center;
+}
+.annotated-word.wordwise .annotation {
+    font-size: 0.6em;
+    line-height: 1;
+    color: #5f6a6a;
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+}
+.annotated-word.wordwise .annotation::before {
+    content: "{";
+    margin-right: 0.2em;
 }
 """
 
@@ -39,7 +56,7 @@ def main() -> None:
         "--threshold",
         "-t",
         type=float,
-        default=2.0,
+        default=2.5,
         help="Zipf frequency threshold (lower is harder)",
     )
     parser.add_argument(
@@ -61,6 +78,11 @@ def main() -> None:
         action="store_true",
         help="Disable phonetic notation in annotations",
     )
+    parser.add_argument(
+        "--wordwise",
+        action="store_true",
+        help="Render annotations on a smaller line under each word",
+    )
 
     args = parser.parse_args()
 
@@ -78,7 +100,11 @@ def main() -> None:
         include_phonetic=not args.no_phonetic,
     )
 
-    annotator = TextAnnotator(difficulty_model, dictionary_service)
+    annotator = TextAnnotator(
+        difficulty_model,
+        dictionary_service,
+        wordwise=args.wordwise,
+    )
 
     print("Processing chapters...")
     count = 0

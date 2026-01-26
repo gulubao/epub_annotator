@@ -1,6 +1,7 @@
 """Core annotation logic: HTML parsing and definition injection."""
 
 from bs4 import BeautifulSoup, NavigableString
+from typing import Union
 
 from src.dictionary import BaseDictionary
 from src.difficulty import DifficultyEvaluator
@@ -15,14 +16,17 @@ class TextAnnotator:
         self,
         difficulty_model: DifficultyEvaluator,
         dictionary: BaseDictionary,
+        wordwise: bool,
     ):
         """
         Args:
             difficulty_model: Evaluator for word difficulty.
             dictionary: Provider for word definitions.
+            wordwise: Place annotations on a separate line under each word.
         """
         self.evaluator = difficulty_model
         self.dictionary = dictionary
+        self.wordwise = wordwise
 
     def process_content(self, html_content: bytes) -> bytes:
         """Process HTML content, annotating difficult words.
@@ -52,7 +56,7 @@ class TextAnnotator:
 
         return soup.encode(formatter='html')
 
-    def _annotate_text(self, soup: BeautifulSoup, text: str) -> list | None:
+    def _annotate_text(self, soup: BeautifulSoup, text: str) -> Union[list, None]:
         """Build annotated node list for text.
 
         Args:
@@ -81,11 +85,22 @@ class TextAnnotator:
             if match.start() > last_idx:
                 new_nodes.append(soup.new_string(text[last_idx:match.start()]))
 
-            wrapper = soup.new_tag("span", attrs={"class": "annotated-word"})
+            if self.wordwise:
+                wrapper_tag = "ruby"
+                annotation_tag = "rt"
+                annotation_text = definition
+                wrapper_classes = ["annotated-word", "wordwise"]
+            else:
+                wrapper_tag = "span"
+                annotation_tag = "span"
+                annotation_text = f" ({definition})"
+                wrapper_classes = ["annotated-word"]
+
+            wrapper = soup.new_tag(wrapper_tag, attrs={"class": wrapper_classes})
             wrapper.string = word
 
-            annotation = soup.new_tag("span", attrs={"class": "annotation"})
-            annotation.string = f" ({definition})"
+            annotation = soup.new_tag(annotation_tag, attrs={"class": "annotation"})
+            annotation.string = annotation_text
             wrapper.append(annotation)
 
             new_nodes.append(wrapper)

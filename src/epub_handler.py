@@ -1,7 +1,7 @@
 """EPUB file handling: reading, writing, and CSS injection."""
 
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Union
 
 import ebooklib
 from ebooklib import epub
@@ -10,7 +10,7 @@ from ebooklib import epub
 class EpubHandler:
     """Encapsulates ebooklib operations for EPUB manipulation."""
 
-    def __init__(self, input_path: str | Path):
+    def __init__(self, input_path: Union[str, Path]):
         """Load an EPUB file.
 
         Args:
@@ -69,7 +69,7 @@ class EpubHandler:
         for item in self.book.toc:
             idx = fix_item(item, idx)
 
-    def save(self, output_path: str | Path) -> None:
+    def save(self, output_path: Union[str, Path]) -> None:
         """Write the EPUB to disk.
 
         Args:
