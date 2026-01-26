@@ -56,7 +56,7 @@ def main() -> None:
         "--threshold",
         "-t",
         type=float,
-        default=2.5,
+        default=3.0,
         help="Zipf frequency threshold (lower is harder)",
     )
     parser.add_argument(
