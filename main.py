@@ -39,7 +39,7 @@ def main() -> None:
         "--threshold",
         "-t",
         type=float,
-        default=4.0,
+        default=2.0,
         help="Zipf frequency threshold (lower is harder)",
     )
     parser.add_argument(
@@ -48,6 +48,18 @@ def main() -> None:
         type=Path,
         default=DEFAULT_DICT_PATH,
         help="Path to ECDICT SQLite database",
+    )
+    parser.add_argument(
+        "--max-defs",
+        "-m",
+        type=int,
+        default=2,
+        help="Maximum number of definitions per word (default: 2)",
+    )
+    parser.add_argument(
+        "--no-phonetic",
+        action="store_true",
+        help="Disable phonetic notation in annotations",
     )
 
     args = parser.parse_args()
@@ -60,7 +72,11 @@ def main() -> None:
 
     print(f"Initializing models (wordfreq & ECDICT: {args.dict})...")
     difficulty_model = DifficultyEvaluator(threshold=args.threshold)
-    dictionary_service = ECDictSqlite(args.dict)
+    dictionary_service = ECDictSqlite(
+        args.dict,
+        max_definitions=args.max_defs,
+        include_phonetic=not args.no_phonetic,
+    )
 
     annotator = TextAnnotator(difficulty_model, dictionary_service)
 

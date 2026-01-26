@@ -77,15 +77,22 @@ class ECDictSqlite(BaseDictionary):
     """
 
     _LEMMA_PATTERN = re.compile(r'[012]:(\w+)')
+    # Pattern to match POS prefix like "n. ", "v. ", "adj. "
+    _POS_PATTERN = re.compile(r'^[a-z]{1,4}\.\s*')
 
-    def __init__(self, db_path: str | Path):
+    def __init__(self, db_path: str | Path, max_definitions: int = 2,
+                 include_phonetic: bool = True):
         """Initialize with path to stardict.db.
 
         Args:
             db_path: Path to ECDICT SQLite database file.
+            max_definitions: Maximum number of definitions to include (default: 2).
+            include_phonetic: Whether to include phonetic notation (default: True).
         """
         self._conn = sqlite3.connect(str(db_path))
         self._conn.row_factory = sqlite3.Row
+        self._max_definitions = max_definitions
+        self._include_phonetic = include_phonetic
 
     def lookup(self, word: str) -> Optional[str]:
         """Look up word in ECDICT.
@@ -96,48 +103,82 @@ class ECDictSqlite(BaseDictionary):
             word: The word to look up.
 
         Returns:
-            First line of Chinese translation if found, None otherwise.
+            Concise translation with optional phonetic, None if not found.
         """
         cursor = self._conn.cursor()
 
         # Direct lookup (COLLATE NOCASE handles case)
         cursor.execute(
-            "SELECT translation, exchange FROM stardict WHERE word = ?",
+            "SELECT phonetic, translation, exchange FROM stardict WHERE word = ?",
             (word.lower(),),
         )
         row = cursor.fetchone()
 
         if row and row['translation']:
-            return self._extract_translation(row['translation'])
+            return self._format_result(row['phonetic'], row['translation'])
 
         # Try lemma lookup via exchange field
         if row and row['exchange']:
             lemma = self._extract_lemma(row['exchange'])
             if lemma:
                 cursor.execute(
-                    "SELECT translation FROM stardict WHERE word = ?",
+                    "SELECT phonetic, translation FROM stardict WHERE word = ?",
                     (lemma,),
                 )
                 lemma_row = cursor.fetchone()
                 if lemma_row and lemma_row['translation']:
-                    return self._extract_translation(lemma_row['translation'])
+                    return self._format_result(
+                        lemma_row['phonetic'], lemma_row['translation']
+                    )
 
         return None
 
+    def _format_result(self, phonetic: Optional[str],
+                       translation: str) -> str:
+        """Format the lookup result with phonetic and concise translation.
+
+        Args:
+            phonetic: Phonetic notation (may be None).
+            translation: Full translation text from database.
+
+        Returns:
+            Formatted string: "[phonetic] def1; def2" or just "def1; def2".
+        """
+        concise = self._extract_translation(translation)
+
+        if self._include_phonetic and phonetic:
+            return f"/{phonetic}/ {concise}"
+        return concise
+
     def _extract_translation(self, translation: str) -> str:
-        """Extract first meaningful translation line.
+        """Extract concise translation (limited definitions).
 
         Args:
             translation: Full translation text from database.
 
         Returns:
-            First line, stripped of POS prefix if present.
+            Concise translation with at most max_definitions meanings.
         """
-        first_line = translation.split('\n')[0].strip()
-        # Remove POS prefix like "n. " or "a. "
-        if len(first_line) > 3 and first_line[1:3] == '. ':
-            return first_line[3:]
-        return first_line
+        definitions = []
+
+        for line in translation.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+
+            # Remove POS prefix like "n. " or "vt. "
+            line = self._POS_PATTERN.sub('', line)
+
+            # Split by Chinese/English comma or semicolon, take first few
+            parts = re.split(r'[,，;；]', line)
+            for part in parts:
+                part = part.strip()
+                if part and part not in definitions:
+                    definitions.append(part)
+                    if len(definitions) >= self._max_definitions:
+                        return '; '.join(definitions)
+
+        return '; '.join(definitions) if definitions else translation.split('\n')[0]
 
     def _extract_lemma(self, exchange: str) -> Optional[str]:
         """Extract base form from exchange field.
