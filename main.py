@@ -56,7 +56,7 @@ def main() -> None:
         "--threshold",
         "-t",
         type=float,
-        default=3.0,
+        default=3.5,
         help="Zipf frequency threshold (lower is harder)",
     )
     parser.add_argument(
@@ -81,7 +81,14 @@ def main() -> None:
     parser.add_argument(
         "--wordwise",
         action="store_true",
-        help="Render annotations on a smaller line under each word",
+        default=True,
+        help="Render annotations on a smaller line under each word (default)",
+    )
+    parser.add_argument(
+        "--inline",
+        action="store_false",
+        dest="wordwise",
+        help="Use inline annotations instead of wordwise mode",
     )
 
     args = parser.parse_args()

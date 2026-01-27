@@ -79,8 +79,13 @@ class ECDictSqlite(BaseDictionary):
     _LEMMA_PATTERN = re.compile(r'[012]:(\w+)')
     # Pattern to match POS prefix like "n. ", "v. ", "adj. "
     _POS_PATTERN = re.compile(r'^[a-z]{1,4}\.\s*')
-    # Pattern to remove parenthetical explanations: (), （）, [], 【】, 〈〉, <>
-    _PAREN_PATTERN = re.compile(r'[\(（\[【〈<][^)）\]】〉>]*[)）\]】〉>]')
+    # Pattern to remove bracketed content: () （） [] 【】 {} 〈〉 <>
+    # Matches: opening bracket + any non-closing chars + closing bracket
+    _PAREN_PATTERN = re.compile(
+        r'[\(（\[【\{〈<]'  # Opening brackets (EN/CN parentheses, square, curly, angle)
+        r'[^)）\]】\}〉>]*'  # Content (non-closing brackets)
+        r'[)）\]】\}〉>]'    # Closing brackets
+    )
 
     def __init__(self, db_path: Union[str, Path], max_definitions: int = 2,
                  include_phonetic: bool = True):

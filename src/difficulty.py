@@ -26,7 +26,7 @@ class DifficultyEvaluator:
     # WordNet POS tags: n=noun, v=verb, a=adjective, r=adverb
     _POS_TAGS = ('v', 'n', 'a', 'r')
 
-    def __init__(self, lang: str = 'en', threshold: float = 3.0):
+    def __init__(self, lang: str = 'en', threshold: float = 3.5):
         """
         Args:
             lang: Language code for frequency lookup.

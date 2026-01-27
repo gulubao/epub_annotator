@@ -24,7 +24,7 @@ unzip data/ecdict.zip -d data && rm data/ecdict.zip
 ## 使用
 
 ```bash
-uv run python main.py "input.epub" -t 3.0 -m 2 --wordwise  # 输出: input_annotated.epub  # -t 3.0 调整阈值 # default 3.0 # 2.0≈前1万词, 3.0≈前3万词 # -m 1 只显示1个释义 # --wordwise 类似 Wordwise 的下行注释
+uv run python main.py "input.epub" -t 3.5 -m 2 --wordwise  # 输出: input_annotated.epub  # -t 3.0 调整阈值 # default 3.0 # 2.0≈前1万词, 3.0≈前3万词 # -m 1 只显示1个释义 # --wordwise 类似 Wordwise 的下行注释
 uv run python main.py "input.epub" -o "output.epub" # 指定输出
 ```
 
